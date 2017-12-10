@@ -1,12 +1,12 @@
-# OCR assignment report 
-## Feature Extraction (Max 200 Words) 
-[Describe and justify the design of your feature extraction. Note,   feature extraction includes all the steps that you have taken to   produce the 10 dimensional feature vector starting from the initial   image of the page.] 
-## Classifier (Max 200 Words) 
-[Describe and justify the design of your classifier and any   associated classifier training stage.] 
-## Error Correction (Max 200 Words) 
-[Describe and justify the design of any post classification error   correction that you may have attempted.] 
-## Performance 
-The percentage errors (to 1 decimal place) for the development data are   as follows: 
-- Page 1: [Insert percentage here, e.g. 98.1%]  - Page 2: [Insert percentage here, e.g. 98.0%]  - Page 3: [Insert percentage here, e.g. 83.3%]  - Page 4: [Insert percentage here, e.g. 58.1%]  - Page 5: [Insert percentage here, e.g. 38.7%]  - Page 6: [Insert percentage here, e.g. 28.9%] 
-## Other information (Optional, Max 100 words) 
-[Optional: highlight any significant aspects of your system that are   NOT covered in the sections above]
+ï»¿#Â OCRÂ assignmentÂ reportÂ 
+##Â FeatureÂ ExtractionÂ (MaxÂ 200Â Words)Â 
+[DescribeÂ andÂ justifyÂ theÂ designÂ ofÂ yourÂ featureÂ extraction.Â Note,Â Â  featureÂ extractionÂ includesÂ allÂ theÂ stepsÂ thatÂ youÂ haveÂ takenÂ toÂ Â  produceÂ theÂ 10Â dimensionalÂ featureÂ vectorÂ startingÂ fromÂ theÂ initialÂ Â  imageÂ ofÂ theÂ page.]Â 
+##Â ClassifierÂ (MaxÂ 200Â Words)Â 
+[DescribeÂ andÂ justifyÂ theÂ designÂ ofÂ yourÂ classifierÂ andÂ anyÂ Â  associatedÂ classifierÂ trainingÂ stage.]Â 
+##Â ErrorÂ CorrectionÂ (MaxÂ 200Â Words)Â 
+[DescribeÂ andÂ justifyÂ theÂ designÂ ofÂ anyÂ postÂ classificationÂ errorÂ Â  correctionÂ thatÂ youÂ mayÂ haveÂ attempted.]Â 
+##Â PerformanceÂ 
+TheÂ percentageÂ errorsÂ (toÂ 1Â decimalÂ place)Â forÂ theÂ developmentÂ dataÂ areÂ Â  asÂ follows:Â 
+â€Â PageÂ 1:Â [InsertÂ percentageÂ here,Â e.g.Â 98.1%]Â  â€Â PageÂ 2:Â [InsertÂ percentageÂ here,Â e.g.Â 98.0%]Â  â€Â PageÂ 3:Â [InsertÂ percentageÂ here,Â e.g.Â 83.3%]Â  â€Â PageÂ 4:Â [InsertÂ percentageÂ here,Â e.g.Â 58.1%]Â  â€Â PageÂ 5:Â [InsertÂ percentageÂ here,Â e.g.Â 38.7%]Â  â€Â PageÂ 6:Â [InsertÂ percentageÂ here,Â e.g.Â 28.9%]Â 
+##Â OtherÂ informationÂ (Optional,Â MaxÂ 100Â words)Â 
+[Optional:Â highlightÂ anyÂ significantÂ aspectsÂ ofÂ yourÂ systemÂ thatÂ areÂ Â  NOTÂ coveredÂ inÂ theÂ sectionsÂ above]
