@@ -145,7 +145,7 @@ def blur_noise(images):
     #Estimate blur
 
     #Use gaussian filter to smooth image
-    return ndimage.filters.gaussian_filter(images, 1)
+    return ndimage.filters.gaussian_filter(images, (1, 1))
 
 def classify_page(page, model):
     """Dummy classifier. Always returns first label.
