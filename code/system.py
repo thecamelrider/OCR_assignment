@@ -12,6 +12,7 @@ version: v1.0
 import numpy as np
 import utils.utils as utils
 import scipy.linalg
+import scipy.ndimage as ndimage
 
 def reduce_dimensions(feature_vectors_full, model):
     """Dummy methods that just takes 1st 10 pixels.
@@ -35,7 +36,7 @@ def reduce_dimensions(feature_vectors_full, model):
         print("Store pca vectors and training mean in model")
         model['pca_vectors'] = v[:, 1:11].tolist()
         model['train_mean'] = np.mean(feature_vectors_full)
-        print("PCA Vectors shape: " + str(np.array(model['pca_vectors']).shape))
+        print("PCA Vectors shape: " + str(np.array(model['pca_vectors']).shape)) 
 
         #Project training data onto pca vectors
         centred_train_data = feature_vectors_full - model['train_mean']
@@ -131,11 +132,20 @@ def load_test_page(page_name, model):
     """
     bbox_size = model['bbox_size']
     images_test = utils.load_char_images(page_name)
+    #Apply gaussian blur to image
+    images_test = blur_noise(images_test)
+
     fvectors_test = images_to_feature_vectors(images_test, bbox_size)
     # Perform the dimensionality reduction.
     fvectors_test_reduced = reduce_dimensions(fvectors_test, model)
     return fvectors_test_reduced
 
+
+def blur_noise(images):
+    #Estimate blur
+
+    #Use gaussian filter to smooth image
+    return ndimage.filters.gaussian_filter(images, 1)
 
 def classify_page(page, model):
     """Dummy classifier. Always returns first label.
@@ -155,38 +165,35 @@ def classify_page(page, model):
     
     print("Train shape: " + str(train.shape))
     print("Test shape: " + str(test.shape))
-    print("Labels shape: " + str(labels_train.shape))
     
-    print("Matrix multiply test data with training...")
     x = np.dot(test, train.transpose())
-    print("Calc modtest and modtrain data...")
     modtest = np.sqrt(np.sum(test * test, axis=1))
     modtrain = np.sqrt(np.sum(train * train, axis=1))
 
-    print("Calc distances between multiplied data and modtest and train...")
+    print("Calc distances between test and train data")
     dist = x / np.outer(modtest, modtrain.transpose()) # cosine distance
-    
-    nearest = np.argmax(dist, axis=1)
-    mdist = np.max(dist, axis=1)
-    print("Get nearest neighbors")
 
-    label = labels_train[nearest]
+    #kNN algorithm
+    k = 6
+    
+    #Sort distances and then flip
+    print("DISTANCES")
 
-    #print(train)
-    #print("Test")
-    #print(test.shape)
-    #print("Modtest")
-    #print(modtest.shape)
-    #print("Modtrain")
-    #print(modtrain.shape)
-    #print("Distances: ")
-    #print(dist.shape)    
-    #print("mdist")
-    #print(mdist.shape)
+    #Get indices of nearest k neighbors
+    dist = np.argsort(dist, axis=1)
+    nearestKDist = np.fliplr(dist)[:, :k]
+
+    #Get nearest k labels
+    nearestLabels = labels_train[nearestKDist]
+    print("Nearest k labels to test char")
+    print(nearestLabels)
+
+    #Reduce to most common character
+    print("Nearest k labels sorted by most common")
+    u, counts = np.unique(nearestLabels[:, :], return_counts = True, axis = 1)
     
-    print(label)
-    print("DONE")
-    
-    return label
-    #Get nearest neighbor of each character
-    #return np.repeat(labels_train[0], len(page))
+    #u = np.fliplr(u)
+    print(counts.shape)
+
+    #Calculating unique chars one by one
+    return u[:, 0]
