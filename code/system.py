@@ -14,42 +14,46 @@ import utils.utils as utils
 import scipy.linalg
 import scipy.ndimage as ndimage
 
+def create_pca_vectors(train_data, model):
+    """Creates pca vectors from training data and stores in model
+
+    Params:
+    train_data - Train data vectors stored as rows
+        in matrix
+    model - a dictionary storing the outputs of the model
+       training stage
+    """    
+    
+    print("Create PCA Vectors and save first 10")
+    covx = np.cov(train_data, rowvar=0)
+    N = covx.shape[0]
+    w, v = scipy.linalg.eigh(covx, eigvals=(N - 40, N - 1))
+    v = np.fliplr(v)
+
+    #Save training mean and pca vectors in model
+    print("Store pca vectors and training mean in model")
+    model['pca_vectors'] = v[:, 1:11].tolist()
+    model['train_mean'] = np.mean(train_data)
+    print("PCA Vectors shape: " + str(np.array(model['pca_vectors']).shape)) 
+
 def reduce_dimensions(feature_vectors_full, model):
-    """Dummy methods that just takes 1st 10 pixels.
+    """Takes feature vectors and projects them onto 10 pca vectors
 
     Params:
     feature_vectors_full - feature vectors stored as rows
        in a matrix
     model - a dictionary storing the outputs of the model
        training stage
-    """    
-    #If performing dimensionality reduction on training data, create PCA vectors
+    """
+
+    #If performing dimensionality reduction on training data, create PCA vectors first
     if 'fvectors_train' not in model:
-        print("Training data")
-        print("Create PCA Vectors and save first 10")
-        covx = np.cov(feature_vectors_full, rowvar=0)
-        N = covx.shape[0]
-        w, v = scipy.linalg.eigh(covx, eigvals=(N - 40, N - 1))
-        v = np.fliplr(v)
+        create_pca_vectors(feature_vectors_full, model)
 
-        #Save training mean and pca vectors in model
-        print("Store pca vectors and training mean in model")
-        model['pca_vectors'] = v[:, 1:11].tolist()
-        model['train_mean'] = np.mean(feature_vectors_full)
-        print("PCA Vectors shape: " + str(np.array(model['pca_vectors']).shape)) 
-
-        #Project training data onto pca vectors
-        centred_train_data = feature_vectors_full - model['train_mean']
-        return np.dot(centred_train_data, np.array(model['pca_vectors']))
-    else:
-        print('Testing data')
-
-        #Project testing data onto pca vectors
-        print('Projecting test data onto PCA Vectors')
-        print(model['train_mean'])
-        print(np.array(model['pca_vectors']).shape)
-        centred_test_data = feature_vectors_full - model['train_mean']
-        return np.dot(centred_test_data, np.array(model['pca_vectors']))
+    #Project data onto pca vectors
+    print('Project ' + str(feature_vectors_full.shape[0]) + ' feature vectors onto PCA Vectors')
+    centred_data = feature_vectors_full - model['train_mean']
+    return np.dot(centred_data, np.array(model['pca_vectors']))
 
 def get_bounding_box_size(images):
     """Compute bounding box size given list of images."""
@@ -132,8 +136,10 @@ def load_test_page(page_name, model):
     """
     bbox_size = model['bbox_size']
     images_test = utils.load_char_images(page_name)
+
     #Apply gaussian blur to image
-    images_test = blur_noise(images_test)
+    #Couldnt get blur to work
+    #images_test = blur_images(images_test)
 
     fvectors_test = images_to_feature_vectors(images_test, bbox_size)
     # Perform the dimensionality reduction.
@@ -141,14 +147,20 @@ def load_test_page(page_name, model):
     return fvectors_test_reduced
 
 
-def blur_noise(images):
+def blur_images(images):
     #Estimate blur
 
-    #Use gaussian filter to smooth image
-    return ndimage.filters.gaussian_filter(images, (1, 1))
+    #Create list of blurred images
+    #return [ndimage.filters.gaussian_filter(img, 0.4) for img in images]
+    print("Type of list before: " + str(type(images)))
+    print("Type of list after: " + str(type([cv2.bilateralFilter(img,9,75,75) for img in images]))) 
+    print("Type of image: ")
+    print(images[0].shape)
+    print(cv2.bilateralFilter(images[0], 9, 75, 75).shape)
+    return [cv2.bilateralFilter(img,9,75,75) for img in images]
 
 def classify_page(page, model):
-    """Dummy classifier. Always returns first label.
+    """KNN classifier. Returns most common label among k neighbors
 
     parameters:
 
@@ -159,41 +171,55 @@ def classify_page(page, model):
     print ("Classifying " + str(len(page)) + " characters!")
 
     #Prepare training/test data and labels
-    train = np.array(model['fvectors_train'])[:, :]
+    train = np.array(model['fvectors_train'])
     labels_train = np.array(model['labels_train'])
-    test = np.array(page)[:, :]
+    test = np.array(page)
     
-    print("Train shape: " + str(train.shape))
-    print("Test shape: " + str(test.shape))
-    
+    #Calculate cos distance for each test point to each train point
     x = np.dot(test, train.transpose())
     modtest = np.sqrt(np.sum(test * test, axis=1))
     modtrain = np.sqrt(np.sum(train * train, axis=1))
-
-    print("Calc distances between test and train data")
     dist = x / np.outer(modtest, modtrain.transpose()) # cosine distance
 
-    #kNN algorithm
-    k = 6
+    #Calculate k nearest algorithm
+    k = calc_good_k(dist)
+
+    #Get nearest labels and weight them
+    nearestK_dist = np.fliplr(np.sort(dist, axis=1))[:, :k]
+    nearest_k_dist_indices = np.fliplr(np.argsort(dist, axis=1))[:, :k]
+    #nearestK_dist = dist[nearest_k_dist_indices]
+    nearestk_labels = labels_train[nearest_k_dist_indices]
+    #nearest_weighted_labels = np.stack((nearestk_labels, nearestK_dist), axis = 2)
+
+    #Fill list with (uniqueLabel, count of each label, and indices for original labels) for each test sample
+    #Replace with unique label with max count
+    unique_label_counts = [np.unique(l, return_counts = True) for l in nearestk_labels]
+    #List of arrays of unique chars
+    unique_labels = [np.unique(l) for l in nearestk_labels]
+    #print(unique_labels)
+
+    #Make list of list of total weights
+    #unique_neighbor_highscore = [[np.sum(nearestK_dist[i, (nearestk_labels[i] == l)]) for l in c] for (i, c) in enumerate(unique_labels)]
+    #unique_neighbor_highscore_label = [unique_labels[i][np.argmax(np.array(s))] for (i, s) in enumerate(unique_neighbor_highscore)]
+    #print(unique_label_scores)
+    most_common_neighbors = [u[np.argmax(c)] for (u,c) in unique_label_counts]
+
+    return np.array(most_common_neighbors)
+
+def calc_good_k(dist_mat):
+    return 250
+
+def correct_errors(page, labels, bboxes, model):
+    """Dummy error correction. Returns labels unchanged.
     
-    #Sort distances and then flip
-    print("DISTANCES")
+    parameters:
 
-    #Get indices of nearest k neighbors
-    dist = np.argsort(dist, axis=1)
-    nearestKDist = np.fliplr(dist)[:, :k]
+    page - 2d array, each row is a feature vector to be classified
+    labels - the output classification label for each feature vector
+    bboxes - 2d array, each row gives the 4 bounding box coords of the character
+    model - dictionary, stores the output of the training stage
+    """
 
-    #Get nearest k labels
-    nearestLabels = labels_train[nearestKDist]
-    print("Nearest k labels to test char")
-    print(nearestLabels)
+    print(page.shape)
 
-    #Reduce to most common character
-    print("Nearest k labels sorted by most common")
-    u, counts = np.unique(nearestLabels[:, :], return_counts = True, axis = 1)
-    
-    #u = np.fliplr(u)
-    print(counts.shape)
-
-    #Calculating unique chars one by one
-    return u[:, 0]
+    return labels
